@@ -1,35 +1,71 @@
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>07b64fd4-0d83-42ae-92fa-ea9fbb107a2f</ProjectGuid>
-    <ProjectHome>.</ProjectHome>
-    <StartupFile>PythonApplication2.py</StartupFile>
-    <SearchPath>
-    </SearchPath>
-    <WorkingDirectory>.</WorkingDirectory>
-    <OutputPath>.</OutputPath>
-    <Name>PythonApplication2</Name>
-    <RootNamespace>PythonApplication2</RootNamespace>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <DebugSymbols>true</DebugSymbols>
-    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <DebugSymbols>true</DebugSymbols>
-    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="PythonApplication2.py" />
-  </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
-  <!-- Uncomment the CoreCompile target to enable the Build command in
-       Visual Studio and specify your pre- and post-build commands in
-       the BeforeBuild and AfterBuild targets below. -->
-  <!--<Target Name="CoreCompile" />-->
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-</Project>
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_absolute_error
+
+# Assuming your data is space-separated
+df = pd.read_csv(r"D:\VStudio\Housing.csv", delimiter='\s+', header=None)
+
+# Assuming the column names are not present in the CSV file, you can assign them manually
+column_names = [
+    "col1", "col2", "col3", "col4", "col5", "col6", "col7", "col8", "col9", "col10", "col11", "col12", "col13", "col14"
+]  # Replace with actual column names
+df.columns = column_names
+
+# Display basic information about the dataset
+print(df.head(10))
+print(df.columns)
+print(df.shape)
+print(df.info())
+
+# Check for and handle duplicates
+rs, cs = df.shape
+df.drop_duplicates(inplace=True)
+
+if df.shape == (rs, cs):
+    print('\n\033[1mInference:\033[0m The dataset doesn\'t have any duplicates')
+else:
+    print(f'\n\033[1mInference:\033[0m Number of duplicates dropped/fixed ---> {rs-df.shape[0]}')
+
+# Assuming 'col14' is the target variable
+# If the target variable has a different name, replace 'col14' with the actual name
+y = df['col14']
+
+# Drop the target variable from the feature set
+X = df.drop(['col14'], axis=1)
+
+# Apply one-hot encoding to categorical variables
+# Assuming you have categorical columns here, replace them with actual column names
+categ = ["col1", "col2", "col3", "col4"]  
+X = pd.get_dummies(X, columns=categ, drop_first=True)
+
+# Visualize the correlation matrix
+numeric_cols = X.select_dtypes(include=[np.number]).columns
+corr = X[numeric_cols].corr()
+plt.figure(figsize=(12, 7))
+sns.heatmap(corr, cmap='coolwarm', annot=True)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Train a linear regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_predict = model.predict(X_test)
+
+# Evaluate the model
+score = r2_score(y_test, y_predict)
+mae = mean_absolute_error(y_test, y_predict)
+
+print(f'R-squared Score: {score}')
+print(f'Mean Absolute Error: {mae}')
+
+
+
+
